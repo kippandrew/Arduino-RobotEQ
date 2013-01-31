@@ -38,7 +38,7 @@ int RobotEQ::isConnected(uint32_t timeout) {
 				return 0;
 			}
 		}
-	   	delay(100);	
+	   	//delay(100);	
 	}
 	return ETIMEOUT;
 }
