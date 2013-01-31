@@ -74,10 +74,6 @@ int RobotEQ::sendCommand(const char *str) {
 }
 		
 int RobotEQ::sendCommand(const uint8_t *q, size_t qSize) {
-	return this->sendCommand(q, qSize, this->m_Timeout);
-}
-
-int RobotEQ::sendCommand(const uint8_t *q, size_t qSize, uint32_t timeout) {
 	if (this->m_Serial == NULL) 
 		return EIO;
 
@@ -104,10 +100,6 @@ int RobotEQ::sendQuery(const char *str, uint8_t *r, size_t rSize) {
 }
 
 int RobotEQ::sendQuery(const uint8_t *q, size_t qSize, uint8_t *r, size_t rSize) {
-	return this->sendQuery(q, qSize, r, rSize, this->m_Timeout);
-}
-
-int RobotEQ::sendQuery(const uint8_t *q, size_t qSize, uint8_t *r, size_t rSize, uint32_t timeout) {
 	if (this->m_Serial == NULL) 
 		return EIO;
 
@@ -119,29 +111,25 @@ int RobotEQ::sendQuery(const uint8_t *q, size_t qSize, uint8_t *r, size_t rSize,
 }
 
 int RobotEQ::send(const uint8_t b) {
-	Log.Debug("sending to controller: %X"CR, (char)b);	
+	//Log.Debug("sending to controller: %X"CR, (char)b);	
 	this->m_Serial->write(b);
 	this->m_Serial->flush();
 }
 
 int RobotEQ::send(const uint8_t * buf, size_t size) {
-	Log.Debug("sending to controller: %s"CR, (char*)buf);	
+	//Log.Debug("sending to controller: %s"CR, (char*)buf);	
 	this->m_Serial->write(buf, size);
 	this->m_Serial->flush();
 }
 
 int RobotEQ::readSerialUntilNewline(uint8_t * buf, size_t size) {
-	return this->readSerialUntilNewline(buf, size, this->m_Timeout);
-}
-
-int RobotEQ::readSerialUntilNewline(uint8_t * buf, size_t size, uint32_t timeout) {
 	uint8_t inByte;
 	size_t index = 0;
 	uint32_t startTime = millis();	
-	while (millis() - startTime < timeout) {
+	while (millis() - startTime < this->m_Timeout) {
 		if (m_Serial->available() > 0) {
 			inByte = m_Serial->read();
-			Log.Debug("read %X from controller"CR, inByte);
+			//Log.Debug("read %X from controller"CR, inByte);
 			buf[index++] = inByte;
 			if (inByte == 0x0D) 
 				return index;

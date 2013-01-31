@@ -84,17 +84,14 @@ class RobotEQ {
 
 		int sendQuery(const char *str, uint8_t *r, size_t rSize); 
 		int sendQuery(const uint8_t *q, size_t qSize, uint8_t *r, size_t rSize);
-		int sendQuery(const uint8_t *q, size_t qSize, uint8_t *r, size_t rSize, uint32_t timeout);
 
 		int sendCommand(const char *str);
 		int sendCommand(const uint8_t *q, size_t qSize);
-		int sendCommand(const uint8_t *q, size_t qSize, uint32_t timeout);
 		
 		int send(const uint8_t b);
 		int send(const uint8_t * buf, size_t size);
 
 		int readSerialUntilNewline(uint8_t * buf, size_t size);
-		int readSerialUntilNewline(uint8_t * buf, size_t size, uint32_t timeout);
 
 	// Private Data
 	private:
