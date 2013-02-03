@@ -1,15 +1,13 @@
 #include "Arduino.h"
 #include "RobotEQ.h"
 
-#define ETIMEOUT -1 
-#define EIO -2
-
 RobotEQ::RobotEQ(Stream *serial) {
 	m_Timeout = ROBOTEQ_DEFAULT_TIMEOUT;	
 	m_Serial = serial; 
 }
 
 RobotEQ::~RobotEQ(void) {
+	m_Serial = NULL;
 }
 
 void RobotEQ::setTimeout(uint32_t timeout) {
@@ -22,7 +20,7 @@ int RobotEQ::isConnected() {
 
 int RobotEQ::isConnected(uint32_t timeout) {
 	if (this->m_Serial == NULL) 
-		return EIO;
+		return ROBOTEQ_IOERROR;
 	
 	uint8_t inByte = 0;
 	uint32_t startTime = millis();
@@ -40,12 +38,18 @@ int RobotEQ::isConnected(uint32_t timeout) {
 		}
 	   	//delay(100);	
 	}
-	return ETIMEOUT;
+	return ROBOTEQ_TIMEOUT;
 }
 		
 int RobotEQ::commandMotorPower(uint8_t ch, int16_t p) {
 	char command[32];
 	sprintf(command, "!G %02d %d\r", ch, p);
+	return this->sendCommand(command);
+}
+
+int RobotEQ::commandEmergencyStop(void) {
+	char command[8];
+	sprintf(command, "!EX\r");
 	return this->sendCommand(command);
 }
 
@@ -75,7 +79,7 @@ int RobotEQ::sendCommand(const char *str) {
 		
 int RobotEQ::sendCommand(const uint8_t *q, size_t qSize) {
 	if (this->m_Serial == NULL) 
-		return EIO;
+		return ROBOTEQ_IOERROR;
 
 	uint8_t buf[32];
 
@@ -91,7 +95,7 @@ int RobotEQ::sendCommand(const uint8_t *q, size_t qSize) {
 	if (strncmp((char*)buf, "+", 1) == 0) {
 		return 0;
 	} else {
-		return 1;
+		return ROBOTEQ_BADCOMMAND;
 	}
 }
 
@@ -101,7 +105,7 @@ int RobotEQ::sendQuery(const char *str, uint8_t *r, size_t rSize) {
 
 int RobotEQ::sendQuery(const uint8_t *q, size_t qSize, uint8_t *r, size_t rSize) {
 	if (this->m_Serial == NULL) 
-		return EIO;
+		return ROBOTEQ_IOERROR;
 
 	// Write Query to Serial
 	this->send(q, qSize);
@@ -136,6 +140,6 @@ int RobotEQ::readSerialUntilNewline(uint8_t * buf, size_t size) {
 		}
 	}
 	// timeout
-	Log.Error("timeout reading controller"CR);
-	return ETIMEOUT;
+	//Log.Error("timeout reading controller"CR);
+	return ROBOTEQ_TIMEOUT;
 }

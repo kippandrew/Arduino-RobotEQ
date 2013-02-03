@@ -26,7 +26,11 @@
 #define ROBOTEQ_ACK_CHAR 0x06
 #define ROBOTEQ_DEFAULT_TIMEOUT 1000 
 
-#include "Logging.h"
+#define ROBOTEQ_OK 0
+#define ROBOTEQ_BADCOMMAND 1
+#define ROBOTEQ_TIMEOUT -1 
+#define ROBOTEQ_IOERROR -2
+
 #include <HardwareSerial.h>
 
 enum RobotEQFaultFlag {
@@ -67,6 +71,7 @@ class RobotEQ {
 		int isConnected(uint32_t timeout);
 
 		int commandMotorPower(uint8_t ch, int16_t p);
+		int commandEmergencyStop(void);
 
 		int queryMotorAmps(uint8_t ch);
 		int queryMotorPower(uint8_t ch);
