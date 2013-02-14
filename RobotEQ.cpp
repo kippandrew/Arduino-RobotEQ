@@ -20,13 +20,14 @@ int RobotEQ::isConnected() {
 
 int RobotEQ::isConnected(uint32_t timeout) {
 	if (this->m_Serial == NULL) 
-		return ROBOTEQ_IOERROR;
+		return ROBOTEQ_ERROR;
 	
 	uint8_t inByte = 0;
 	uint32_t startTime = millis();
 
 	// send QRY 
-	this->send(ROBOTEQ_QUERY_CHAR);
+	this->m_Serial->write(ROBOTEQ_QUERY_CHAR);
+	this->m_Serial->flush();
 
 	while (millis() - startTime < timeout) {
 		// wait for ACK
@@ -48,85 +49,130 @@ int RobotEQ::commandMotorPower(uint8_t ch, int16_t p) {
 }
 
 int RobotEQ::commandEmergencyStop(void) {
-	char command[8];
+	char command[32];
 	sprintf(command, "!EX\r");
 	return this->sendCommand(command);
 }
 
-int RobotEQ::queryFaultFlag(RobotEQFaultFlag flag) {
-	uint8_t fault;
-	if (this->sendQuery("?FF\r", &fault, 1) <= 0) {
-		return -1;
-	}
-	return (fault & (1 << (int)flag) > 0);
+int RobotEQ::queryFaultFlag() {
+	// Query: ?FF
+	// Response: FF=<status>
+	int fault = -1;
+	uint8_t buffer[ROBOTEQ_BUFFER_SIZE];
+	memset(buffer, NULL, ROBOTEQ_BUFFER_SIZE);
+	int res = 0;
+	if ((res = this->sendQuery("?FF\r", (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0)
+		return res;
+	if (res < 4) 
+		return ROBOTEQ_BAD_RESPONSE;
+	if (sscanf((char*)buffer, "FF=%i", &fault) < 1)
+		return ROBOTEQ_BAD_RESPONSE;
+	return fault;
 }
 
-int RobotEQ::queryStatusFlag(RobotEQStatusFlag flag) {
-	uint8_t status;
-	if (this->sendQuery("?FS\r", &status, 1) <= 0) {
-		return -1;
-	}
-	return (status & (1 << (int)flag) > 0);
+int RobotEQ::queryStatusFlag() {
+	// Query: ?FS
+	// Response: FS=<status>
+	uint8_t buffer[ROBOTEQ_BUFFER_SIZE];
+	int status = -1;
+	memset(buffer, NULL, ROBOTEQ_BUFFER_SIZE);
+	int res;
+	if ((res = this->sendQuery("?FS\r", (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0) 
+		return res;
+	if (res < 4)
+		return ROBOTEQ_BAD_RESPONSE;
+	if (sscanf((char*)buffer, "FS=%i", &status) < 1)
+		return ROBOTEQ_BAD_RESPONSE;
+	return status;	
 }
 
-int RobotEQ::queryFirmware(char *buf, size_t size) {
-	return this->sendQuery("?FID\r", (uint8_t*)buf, size);
+int RobotEQ::queryFirmware(char* buf, size_t bufSize) {
+	memset(buf, NULL, bufSize);
+	return this->sendQuery("?FID\r", (uint8_t*)buf, 100);
 }
 
-int RobotEQ::sendCommand(const char *str) {
-	return this->sendCommand((uint8_t*)str, strlen(str));
+
+int RobotEQ::queryBatteryAmps(void) {
+	// Query: ?BA 
+	// Response: BA=<ch1*10>:<ch2*10>
+	int ch1,ch2 = -1;
+	int total = -1;
+	char buffer[ROBOTEQ_BUFFER_SIZE];
+	int res;
+	if ((res = this->sendQuery("?BA\r", (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0) 
+		return res;
+	//Log.Info("buf %s"CR, buffer);
+	if (res < 4)
+		return ROBOTEQ_BAD_RESPONSE;
+	if (sscanf((char*)buffer, "BA=%i:%i", &ch1, &ch2) < 2)
+		return ROBOTEQ_BAD_RESPONSE;
+	total = ch1 + ch2;
+	return total;
 }
-		
-int RobotEQ::sendCommand(const uint8_t *q, size_t qSize) {
+
+int RobotEQ::queryBatteryVoltage(void) {
+	// Query: ?V 2 (2 = main battery voltage)
+	// Response: V=<voltage>*10
+	uint8_t buffer[ROBOTEQ_BUFFER_SIZE];
+	int voltage = -1; 
+	memset(buffer, NULL, ROBOTEQ_BUFFER_SIZE);
+	int res;
+	if ((res = this->sendQuery("?V 2\r", (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0) 
+		return res;
+	if (res < 4)
+		return ROBOTEQ_BAD_RESPONSE;
+	if (sscanf((char*)buffer, "V=%i", &voltage) != 1)
+		return ROBOTEQ_BAD_RESPONSE;
+	return voltage;	
+}
+
+int RobotEQ::sendCommand(const char *command) {
+	return this->sendCommand(command, strlen(command));
+}
+
+int RobotEQ::sendCommand(const char *command, size_t commandSize) {
 	if (this->m_Serial == NULL) 
-		return ROBOTEQ_IOERROR;
-
-	uint8_t buf[32];
+		return ROBOTEQ_ERROR;
 
 	// Write Command to Serial
-	this->send(q, qSize);
+	this->m_Serial->write((uint8_t*)command, commandSize);
+	this->m_Serial->flush();
+	
+	uint8_t buffer[ROBOTEQ_BUFFER_SIZE];
+	int res = 0; 
 
 	// Read Serial until timeout or newline
-	if (this->readSerialUntilNewline(buf, 32) <= 0) {
-		return -1;
-	}	
+	if ((res = this->readSerialUntilNewline((uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0)
+		return res;
+
+	if (res < 1) 
+		return ROBOTEQ_BAD_RESPONSE; 
 
 	// Check Command Status
-	if (strncmp((char*)buf, "+", 1) == 0) {
-		return 0;
+	if (strncmp((char*)buffer, "+", 1) == 0) {
+		return ROBOTEQ_OK;
 	} else {
-		return ROBOTEQ_BADCOMMAND;
+		return ROBOTEQ_BAD_COMMAND;
 	}
 }
 
-int RobotEQ::sendQuery(const char *str, uint8_t *r, size_t rSize) {
-	return this->sendQuery((const uint8_t*)str, strlen(str), r, rSize);
+int RobotEQ::sendQuery(const char *query, uint8_t *buf, size_t bufSize) {
+	return this->sendQuery(query, strlen(query), buf, bufSize);
 }
 
-int RobotEQ::sendQuery(const uint8_t *q, size_t qSize, uint8_t *r, size_t rSize) {
+int RobotEQ::sendQuery(const char *query, size_t querySize, uint8_t *buf, size_t bufSize) {
 	if (this->m_Serial == NULL) 
-		return ROBOTEQ_IOERROR;
+		return ROBOTEQ_ERROR;
 
 	// Write Query to Serial
-	this->send(q, qSize);
+	this->m_Serial->write((uint8_t*)query, querySize);
+	this->m_Serial->flush();
 
 	// Read Serial until timeout or newline
-	return this->readSerialUntilNewline(r, rSize);
+	return this->readSerialUntilNewline(buf, bufSize);
 }
 
-int RobotEQ::send(const uint8_t b) {
-	//Log.Debug("sending to controller: %X"CR, (char)b);	
-	this->m_Serial->write(b);
-	this->m_Serial->flush();
-}
-
-int RobotEQ::send(const uint8_t * buf, size_t size) {
-	//Log.Debug("sending to controller: %s"CR, (char*)buf);	
-	this->m_Serial->write(buf, size);
-	this->m_Serial->flush();
-}
-
-int RobotEQ::readSerialUntilNewline(uint8_t * buf, size_t size) {
+int RobotEQ::readSerialUntilNewline(uint8_t *buf, size_t bufferSize) {
 	uint8_t inByte;
 	size_t index = 0;
 	uint32_t startTime = millis();	
@@ -135,11 +181,16 @@ int RobotEQ::readSerialUntilNewline(uint8_t * buf, size_t size) {
 			inByte = m_Serial->read();
 			//Log.Debug("read %X from controller"CR, inByte);
 			buf[index++] = inByte;
-			if (inByte == 0x0D) 
+			if (index > bufferSize) {
+				Log.Error("buffer overflow"CR);
+				return index;	
+			}
+			if (inByte == 0x0D) {
 				return index;
+			}
 		}
 	}
 	// timeout
-	//Log.Error("timeout reading controller"CR);
+	Log.Error("timeout reading controller"CR);
 	return ROBOTEQ_TIMEOUT;
 }
