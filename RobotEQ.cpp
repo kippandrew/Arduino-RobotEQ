@@ -33,7 +33,6 @@ int RobotEQ::isConnected() {
 				return 0;
 			}
 		}
-	   	//delay(100);	
 	}
 	return ROBOTEQ_TIMEOUT;
 }
@@ -61,6 +60,7 @@ int RobotEQ::queryFaultFlag() {
 		return res;
 	if (res < 4) 
 		return ROBOTEQ_BAD_RESPONSE;
+    // Parse Response
 	if (sscanf((char*)buffer, "FF=%i", &fault) < 1)
 		return ROBOTEQ_BAD_RESPONSE;
 	return fault;
@@ -77,6 +77,7 @@ int RobotEQ::queryStatusFlag() {
 		return res;
 	if (res < 4)
 		return ROBOTEQ_BAD_RESPONSE;
+    // Parse Response
 	if (sscanf((char*)buffer, "FS=%i", &status) < 1)
 		return ROBOTEQ_BAD_RESPONSE;
 	return status;	
@@ -87,8 +88,7 @@ int RobotEQ::queryFirmware(char* buf, size_t bufSize) {
 	// Response: FID=<firmware>
 	memset(buf, NULL, bufSize);
 	return this->sendQuery("?FID\r", (uint8_t*)buf, 100);
-
-    // TODO: Parse firmware
+    // TODO: Parse response 
 }
 
 
@@ -101,9 +101,9 @@ int RobotEQ::queryBatteryAmps(void) {
 	int res;
 	if ((res = this->sendQuery("?BA\r", (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0) 
 		return res;
-	//Log.Info("buf %s"CR, buffer);
 	if (res < 4)
 		return ROBOTEQ_BAD_RESPONSE;
+    // Parse Response
 	if (sscanf((char*)buffer, "BA=%i:%i", &ch1, &ch2) < 2)
 		return ROBOTEQ_BAD_RESPONSE;
 	total = ch1 + ch2;
@@ -121,6 +121,7 @@ int RobotEQ::queryBatteryVoltage(void) {
 		return res;
 	if (res < 4)
 		return ROBOTEQ_BAD_RESPONSE;
+    // Parse Response
 	if (sscanf((char*)buffer, "V=%i", &voltage) != 1)
 		return ROBOTEQ_BAD_RESPONSE;
 	return voltage;	
@@ -178,11 +179,10 @@ int RobotEQ::readResponse(uint8_t *buf, size_t bufferSize) {
 	while (millis() - startTime < this->m_Timeout) {
 		if (m_Serial->available() > 0) {
 			inByte = m_Serial->read();
-			//Log.Debug("read %X from controller"CR, inByte);
 			buf[index++] = inByte;
 			if (index > bufferSize) {
-				Log.Error("buffer overflow"CR);
-				return index;	
+                // out of buffer space
+                return ROBOTEQ_BUFFER_OVER;
 			}
 			if (inByte == 0x0D) {
 				return index;
@@ -190,6 +190,5 @@ int RobotEQ::readResponse(uint8_t *buf, size_t bufferSize) {
 		}
 	}
 	// timeout
-	Log.Error("timeout reading controller"CR);
 	return ROBOTEQ_TIMEOUT;
 }

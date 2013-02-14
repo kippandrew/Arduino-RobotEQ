@@ -23,7 +23,6 @@
 #define ROBOTEQ_H
 
 #include <HardwareSerial.h>
-#include <Logging.h>
 
 #define ROBOTEQ_DEFAULT_TIMEOUT     1000 
 #define ROBOTEQ_BUFFER_SIZE         64
@@ -36,6 +35,7 @@
 #define ROBOTEQ_ERROR               -2
 #define ROBOTEQ_BAD_COMMAND         -3
 #define ROBOTEQ_BAD_RESPONSE        -4
+#define ROBOTEQ_BUFFER_OVER         -5
 
 #define ROBOTEQ_FAULT_OVERHEAT      0x01
 #define ROBOTEQ_FAULT_OVERVOLTAGE   0x02
@@ -65,24 +65,79 @@ class RobotEQ {
 
     // Public Methods
     public:
-        uint16_t getTimeout(void);
-        void setTimeout(uint16_t timeout);
-
         int isConnected(void);
 
+        /*
+         * send motor power command (!G)
+         *
+         * @param ch channel
+         * @param p power level (-1000, 1000)
+         *
+         * @return ROBOTEQ_OK if successful 
+         */
         int commandMotorPower(uint8_t ch, int16_t p);
+
+        /*
+         * send emergency stop command (!EX) 
+         * note: you have to reset the controller after this sending command
+         *
+         * @return ROBOTEQ_OK if successful 
+         */
         int commandEmergencyStop(void);
-        
+
+        /*
+         * query controller firmware
+         * 
+         * @param
+         * @param
+         *
+         * @return
+         */ 
         int queryFirmware(char *buf, size_t bufSize);
 
+        /*
+         * query motor amps
+         * 
+         * @param ch channel
+         * 
+         * @return motor amps * 10
+         */
         int queryMotorAmps(uint8_t ch);
+        
         int queryMotorPower(uint8_t ch);
 
+        /*
+         * query battery amps
+         * 
+         * @return battery amps * 10
+         */
         int queryBatteryAmps(void);
+        
+        /*
+         * query battery amps
+         * 
+         * @param ch channel
+         * 
+         * @return battery amps * 10
+         */
+        int queryBatteryAmps(uint8_t ch);
+       
+        /*
+         * query battery voltage
+         * 
+         * @return battery voltage * 10
+         */ 
         int queryBatteryVoltage(void);
 
         int queryFaultFlag(void);
+        
         int queryStatusFlag(void);
+        
+        
+        uint16_t getTimeout(void);
+        
+        void setTimeout(uint16_t timeout);
+
 
     // Private Methods
     private:
