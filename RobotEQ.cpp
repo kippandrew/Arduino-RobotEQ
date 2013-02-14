@@ -10,15 +10,11 @@ RobotEQ::~RobotEQ(void) {
 	m_Serial = NULL;
 }
 
-void RobotEQ::setTimeout(uint32_t timeout) {
+void RobotEQ::setTimeout(uint16_t timeout) {
 	m_Timeout = timeout;
 }
 
 int RobotEQ::isConnected() {
-	return this->isConnected(this->m_Timeout);
-}
-
-int RobotEQ::isConnected(uint32_t timeout) {
 	if (this->m_Serial == NULL) 
 		return ROBOTEQ_ERROR;
 	
@@ -29,7 +25,7 @@ int RobotEQ::isConnected(uint32_t timeout) {
 	this->m_Serial->write(ROBOTEQ_QUERY_CHAR);
 	this->m_Serial->flush();
 
-	while (millis() - startTime < timeout) {
+	while (millis() - startTime < (uint32_t)this->m_Timeout) {
 		// wait for ACK
 		if (m_Serial->available() > 0) {
 			inByte = m_Serial->read();
@@ -87,8 +83,12 @@ int RobotEQ::queryStatusFlag() {
 }
 
 int RobotEQ::queryFirmware(char* buf, size_t bufSize) {
+	// Query: ?FID
+	// Response: FID=<firmware>
 	memset(buf, NULL, bufSize);
 	return this->sendQuery("?FID\r", (uint8_t*)buf, 100);
+
+    // TODO: Parse firmware
 }
 
 
@@ -142,9 +142,8 @@ int RobotEQ::sendCommand(const char *command, size_t commandSize) {
 	int res = 0; 
 
 	// Read Serial until timeout or newline
-	if ((res = this->readSerialUntilNewline((uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0)
+	if ((res = this->readResponse((uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0)
 		return res;
-
 	if (res < 1) 
 		return ROBOTEQ_BAD_RESPONSE; 
 
@@ -169,10 +168,10 @@ int RobotEQ::sendQuery(const char *query, size_t querySize, uint8_t *buf, size_t
 	this->m_Serial->flush();
 
 	// Read Serial until timeout or newline
-	return this->readSerialUntilNewline(buf, bufSize);
+	return this->readResponse(buf, bufSize);
 }
 
-int RobotEQ::readSerialUntilNewline(uint8_t *buf, size_t bufferSize) {
+int RobotEQ::readResponse(uint8_t *buf, size_t bufferSize) {
 	uint8_t inByte;
 	size_t index = 0;
 	uint32_t startTime = millis();	
