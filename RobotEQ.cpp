@@ -30,7 +30,7 @@ int RobotEQ::isConnected() {
 		if (m_Serial->available() > 0) {
 			inByte = m_Serial->read();
 			if (inByte == ROBOTEQ_ACK_CHAR) {
-				return 0;
+				return ROBOTEQ_OK;
 			}
 		}
 	}
@@ -38,13 +38,13 @@ int RobotEQ::isConnected() {
 }
 		
 int RobotEQ::commandMotorPower(uint8_t ch, int16_t p) {
-	char command[32];
+	char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
 	sprintf(command, "!G %02d %d\r", ch, p);
 	return this->sendCommand(command);
 }
 
 int RobotEQ::commandEmergencyStop(void) {
-	char command[32];
+	char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
 	sprintf(command, "!EX\r");
 	return this->sendCommand(command);
 }
@@ -91,23 +91,75 @@ int RobotEQ::queryFirmware(char* buf, size_t bufSize) {
     // TODO: Parse response 
 }
 
-
-int RobotEQ::queryBatteryAmps(void) {
-	// Query: ?BA 
-	// Response: BA=<ch1*10>:<ch2*10>
-	int ch1,ch2 = -1;
-	int total = -1;
-	char buffer[ROBOTEQ_BUFFER_SIZE];
-	int res;
+int RobotEQ::queryMotorPower(uint8_t ch) {
+	// Query: ?M [ch]
+	// Response: M=<motor power>
+    int p;
+    char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
+    char buffer[ROBOTEQ_BUFFER_SIZE];
+    int res;
+    
+    // Build Query Command
+    sprintf(command, "?M %i\r", ch);
+     
+    // Send Query
 	if ((res = this->sendQuery("?BA\r", (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0) 
 		return res;
 	if (res < 4)
 		return ROBOTEQ_BAD_RESPONSE;
+    
     // Parse Response
-	if (sscanf((char*)buffer, "BA=%i:%i", &ch1, &ch2) < 2)
+    if (sscanf((char*)buffer, "M=%i", &p) < 1) {
+        return ROBOTEQ_BAD_RESPONSE;
+    }
+    return p; 
+}
+
+int RobotEQ::queryBatteryAmps(void) {
+	// Query: ?BA 
+	// Response: BA=<ch1*10>:<ch2*10>
+    int ch1, ch2;
+	char buffer[ROBOTEQ_BUFFER_SIZE];
+	int res;
+    
+    // Send Query
+	if ((res = this->sendQuery("?BA\r", (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0) 
+		return res;
+	if (res < 4)
 		return ROBOTEQ_BAD_RESPONSE;
-	total = ch1 + ch2;
-	return total;
+
+    // Parse Response
+    if (sscanf((char*)buffer, "BA=%i:%i", &ch1, &ch2) < 2) {
+        return ROBOTEQ_BAD_RESPONSE;
+    }
+
+    // Return total amps (ch1 + ch2)
+    return ch1+ch2;
+}
+
+int RobotEQ::queryBatteryAmps(uint8_t ch) {
+	// Query: ?BA [ch]
+	// Response: BA=<ch*10>
+	int amps;
+	char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
+	char buffer[ROBOTEQ_BUFFER_SIZE];
+	int res;
+
+    // Build Query Command
+    sprintf(command, "?BA %i\r", ch);
+
+    // Send Query
+	if ((res = this->sendQuery(command, (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0) 
+		return res;
+	if (res < 4)
+		return ROBOTEQ_BAD_RESPONSE;
+
+    // Parse Response
+    if (sscanf((char*)buffer, "BA=%i", &amps) < 1) {
+        return ROBOTEQ_BAD_RESPONSE;
+    }
+
+	return amps;
 }
 
 int RobotEQ::queryBatteryVoltage(void) {

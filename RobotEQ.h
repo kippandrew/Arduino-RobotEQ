@@ -26,6 +26,7 @@
 
 #define ROBOTEQ_DEFAULT_TIMEOUT     1000 
 #define ROBOTEQ_BUFFER_SIZE         64
+#define ROBOTEQ_COMMAND_BUFFER_SIZE 20
 
 #define ROBOTEQ_QUERY_CHAR          0x05
 #define ROBOTEQ_ACK_CHAR            0x06
@@ -65,6 +66,11 @@ class RobotEQ {
 
     // Public Methods
     public:
+        /*
+         * check if controller is connected
+         *
+         * @return ROBOTEQ_OK if connected
+         */
         int isConnected(void);
 
         /*
@@ -72,7 +78,6 @@ class RobotEQ {
          *
          * @param ch channel
          * @param p power level (-1000, 1000)
-         *
          * @return ROBOTEQ_OK if successful 
          */
         int commandMotorPower(uint8_t ch, int16_t p);
@@ -90,7 +95,6 @@ class RobotEQ {
          * 
          * @param
          * @param
-         *
          * @return
          */ 
         int queryFirmware(char *buf, size_t bufSize);
@@ -99,12 +103,9 @@ class RobotEQ {
          * query motor amps
          * 
          * @param ch channel
-         * 
          * @return motor amps * 10
          */
         int queryMotorAmps(uint8_t ch);
-        
-        int queryMotorPower(uint8_t ch);
 
         /*
          * query battery amps
@@ -117,7 +118,6 @@ class RobotEQ {
          * query battery amps
          * 
          * @param ch channel
-         * 
          * @return battery amps * 10
          */
         int queryBatteryAmps(uint8_t ch);
@@ -128,16 +128,44 @@ class RobotEQ {
          * @return battery voltage * 10
          */ 
         int queryBatteryVoltage(void);
+        
+        /*
+         * query internal temp 
+         * 
+         * @return temp (in degrees C)
+         */ 
+        int queryInternalTemp(void);
 
+        /*
+         * query channel temp 
+         * 
+         * @param ch channel
+         * @return temp (in degrees C)
+         */ 
+        int queryTemp(uint8_t ch);
+       
+        /*
+         * query the motor power command
+         * 
+         * @param ch channel
+         * @return motor power
+         */ 
+        int queryMotorPower(uint8_t ch);
+
+        /*
+         * query fault flags
+         */
         int queryFaultFlag(void);
         
+        /*
+         * query status flags
+         */
         int queryStatusFlag(void);
         
-        
-        uint16_t getTimeout(void);
-        
+        /*
+         * set timeout
+         */
         void setTimeout(uint16_t timeout);
-
 
     // Private Methods
     private:
