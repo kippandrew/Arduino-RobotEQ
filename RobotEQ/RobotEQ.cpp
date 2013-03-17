@@ -216,7 +216,7 @@ int RobotEQ::queryEncoderSpeed(uint8_t ch){
     // Send Query
     if ((res = this->sendQuery(command, (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0)
         return res;
-    if (res < 4)
+    if (res < 3)
         return ROBOTEQ_BAD_RESPONSE;
 
     // Parse Response
