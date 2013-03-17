@@ -36,10 +36,16 @@ int RobotEQ::isConnected() {
     }
     return ROBOTEQ_TIMEOUT;
 }
-        
+
 int RobotEQ::commandMotorPower(uint8_t ch, int16_t p) {
     char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
     sprintf(command, "!G %02d %d\r", ch, p);
+    return this->sendCommand(command);
+}
+
+int RobotEQ::commandMotorAmp(uint8_t ch, int16_t a){
+    char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
+    sprintf(command, "^ALIM", ch, a);
     return this->sendCommand(command);
 }
 
@@ -179,6 +185,32 @@ int RobotEQ::queryBatteryVoltage(void) {
     return voltage; 
 }
 
+int RobotEQ::queryMotorVoltage(void) {
+    // Query: ?V 1 (1 = main motor voltage)
+    // Response: V=<voltage>*10
+    uint8_t buffer[ROBOTEQ_BUFFER_SIZE];
+    int voltage = -1; 
+    memset(buffer, NULL, ROBOTEQ_BUFFER_SIZE);
+    int res;
+    if ((res = this->sendQuery("?V 1\r", (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0) 
+        return res;
+    if (res < 4)
+        return ROBOTEQ_BAD_RESPONSE;
+    // Parse Response
+    if (sscanf((char*)buffer, "V=%i", &voltage) != 1)
+        return ROBOTEQ_BAD_RESPONSE;
+    return voltage; 
+}
+
+
+int RobotEQ::queryEncoderSpeed(uint8_t ch){
+    // Query: ?S 1 (1 = encoder 1)
+    // Response: S = vv:vv
+    uint8_t buffer[ROBOTEQ_BUFFER_SIZE];
+
+
+}
+
 int RobotEQ::sendCommand(const char *command) {
     return this->sendCommand(command, strlen(command));
 }
@@ -197,7 +229,7 @@ int RobotEQ::sendCommand(const char *command, size_t commandSize) {
     // Read Serial until timeout or newline
     if ((res = this->readResponse((uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0)
         return res;
-    if (res < 1) 
+    if (res < 1)
         return ROBOTEQ_BAD_RESPONSE; 
 
     // Check Command Status

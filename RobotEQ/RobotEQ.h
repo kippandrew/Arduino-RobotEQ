@@ -22,7 +22,7 @@
 #ifndef ROBOTEQ_H
 #define ROBOTEQ_H
 
-#include <HardwareSerial.h>
+#include <Stream.h>
 
 #define ROBOTEQ_DEFAULT_TIMEOUT     1000 
 #define ROBOTEQ_BUFFER_SIZE         64
@@ -81,6 +81,14 @@ class RobotEQ {
          * @return ROBOTEQ_OK if successful 
          */
         int commandMotorPower(uint8_t ch, int16_t p);
+         
+         /*
+          *set max amps    
+          *@param ch channel
+          *@param a amps level (x10)
+          */
+
+        int commandMotorAmp(uint8_t ch, int16_t a);
 
         /*
          * send emergency stop command (!EX) 
@@ -88,6 +96,10 @@ class RobotEQ {
          *
          * @return ROBOTEQ_OK if successful 
          */
+
+      
+
+
         int commandEmergencyStop(void);
 
         /*
@@ -130,6 +142,12 @@ class RobotEQ {
         int queryBatteryVoltage(void);
 
         /*
+         * query motor voltage
+         * 
+         * @return motor voltage * 10
+         */ 
+        int queryMotorVoltage(void);
+        /*
          * query internal temp 
          * 
          * @return temp (in degrees C)
@@ -161,6 +179,12 @@ class RobotEQ {
          * query status flags
          */
         int queryStatusFlag(void);
+
+        /*
+         *query encoder speed in RPM
+         *
+         */
+         int queryEncoderSpeed(uint8_t ch);
 
         /*
          * set timeout
