@@ -81,25 +81,21 @@ class RobotEQ {
          * @return ROBOTEQ_OK if successful 
          */
         int commandMotorPower(uint8_t ch, int16_t p);
-         
-         /*
-          *set max amps    
-          *@param ch channel
-          *@param a amps level (x10)
-          */
 
+         /*
+          * set max amps
+          * @param ch channel
+          * @param a amps level (x10)
+          * @return ROBOTEQ_OK if successful
+          */
         int commandMotorAmp(uint8_t ch, int16_t a);
 
         /*
-         * send emergency stop command (!EX) 
+         * send emergency stop command (!EX)
          * note: you have to reset the controller after this sending command
          *
-         * @return ROBOTEQ_OK if successful 
+         * @return ROBOTEQ_OK if successful
          */
-
-      
-
-
         int commandEmergencyStop(void);
 
         /*
@@ -108,7 +104,7 @@ class RobotEQ {
          * @param
          * @param
          * @return
-         */ 
+         */
         int queryFirmware(char *buf, size_t bufSize);
 
         /*
@@ -181,10 +177,49 @@ class RobotEQ {
         int queryStatusFlag(void);
 
         /*
-         *query encoder speed in RPM
+         * query encoder speed in RPM
          *
+         * @param ch channel
+         * @return rpm
          */
-         int queryEncoderSpeed(uint8_t ch);
+        int queryEncoderSpeed(uint8_t ch);
+
+        /*
+         * query encoder speed in RPM
+         *
+         * @param ch channel
+         * @return rpm
+         */
+        int queryEncoderRelativeSpeed(uint8_t ch);
+
+        /*
+         * set encoder pulse per rotation
+         *
+         * @param ch channel
+         * @param ppr pulese per rotation
+         *
+         * @return ROBOTEQ_OK if successful
+         */
+        int setEncoderPulsePerRotation(uint8_t ch, uint16_t ppr);
+
+        /*
+         * get encoder pulse per rotation
+         */
+        int getEncoderPulsePerRotation(void);
+
+        /*
+         * load controller configuration
+         *
+         * @return ROBOTEQ_OK if successful
+         */
+        int loadConfiguration(void);
+
+        /*
+         * save controller configuration
+         *
+         * @return ROBOTEQ_OK if successful
+         */
+        int saveConfiguration(void);
 
         /*
          * set timeout
@@ -196,10 +231,10 @@ class RobotEQ {
 
         int sendQuery(const char *query, uint8_t *buf, size_t bufSize);
         int sendQuery(const char *query, size_t querySize, uint8_t *buf, size_t bufSize);
-        
+
         int sendCommand(const char *command);
         int sendCommand(const char *command, size_t commandSize);
-        
+
         int readResponse(uint8_t *buf, size_t bufSize);
 
     // Private Data

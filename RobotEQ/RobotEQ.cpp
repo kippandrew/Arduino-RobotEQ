@@ -202,13 +202,56 @@ int RobotEQ::queryMotorVoltage(void) {
     return voltage; 
 }
 
-
 int RobotEQ::queryEncoderSpeed(uint8_t ch){
-    // Query: ?S 1 (1 = encoder 1)
-    // Response: S = vv:vv
-    uint8_t buffer[ROBOTEQ_BUFFER_SIZE];
+    // Query: ?S [ch]
+    // Response: S=[speed]
+    int speed;
+    char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
+    char buffer[ROBOTEQ_BUFFER_SIZE];
+    int res;
 
+    // Build Query Command
+    sprintf(command, "?S %i\r", ch);
 
+    // Send Query
+    if ((res = this->sendQuery(command, (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0)
+        return res;
+    if (res < 4)
+        return ROBOTEQ_BAD_RESPONSE;
+
+    // Parse Response
+    if (sscanf((char*)buffer, "S=%i", &speed) < 1) {
+        return ROBOTEQ_BAD_RESPONSE;
+    }
+    return speed;
+}
+
+int RobotEQ::queryEncoderRelativeSpeed(uint8_t ch) {
+    // TODO: not implmented
+    return ROBOTEQ_OK;
+}
+
+int RobotEQ::setEncoderPulsePerRotation(uint8_t ch, uint16_t ppr) {
+    char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
+    sprintf(command, "^EPPR %02d %d\r", ch, ppr);
+    return this->sendCommand(command);
+}
+
+int RobotEQ::getEncoderPulsePerRotation(void) {
+    // TODO: not implmented
+    return ROBOTEQ_OK;
+}
+
+int RobotEQ::loadConfiguration(void) {
+    char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
+    sprintf(command, "%%EELD\r");
+    return this->sendCommand(command);
+}
+
+int RobotEQ::saveConfiguration(void) {
+    char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
+    sprintf(command, "%%EESAV\r");
+    return this->sendCommand(command);
 }
 
 int RobotEQ::sendCommand(const char *command) {
