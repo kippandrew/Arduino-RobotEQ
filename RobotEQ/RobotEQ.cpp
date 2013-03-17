@@ -43,12 +43,6 @@ int RobotEQ::commandMotorPower(uint8_t ch, int16_t p) {
     return this->sendCommand(command);
 }
 
-int RobotEQ::commandMotorAmp(uint8_t ch, int16_t a){
-    char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
-    sprintf(command, "^ALIM", ch, a);
-    return this->sendCommand(command);
-}
-
 int RobotEQ::commandEmergencyStop(void) {
     char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
     sprintf(command, "!EX\r");
@@ -237,7 +231,18 @@ int RobotEQ::setEncoderPulsePerRotation(uint8_t ch, uint16_t ppr) {
     return this->sendCommand(command);
 }
 
-int RobotEQ::getEncoderPulsePerRotation(void) {
+int RobotEQ::getEncoderPulsePerRotation(uint8_t ch) {
+    // TODO: not implmented
+    return ROBOTEQ_OK;
+}
+
+int RobotEQ::setMotorAmpLimit(uint8_t ch, uint16_t a){
+    char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
+    sprintf(command, "^ALIM %i %i", ch, a);
+    return this->sendCommand(command);
+}
+
+int RobotEQ::getMotorAmpLimit(uint8_t ch){
     // TODO: not implmented
     return ROBOTEQ_OK;
 }

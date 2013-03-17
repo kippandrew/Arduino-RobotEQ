@@ -73,6 +73,10 @@ class RobotEQ {
          */
         int isConnected(void);
 
+        //*********************************************************************
+        // Commands
+        //*********************************************************************
+
         /*
          * send motor power command (!G)
          *
@@ -82,14 +86,6 @@ class RobotEQ {
          */
         int commandMotorPower(uint8_t ch, int16_t p);
 
-         /*
-          * set max amps
-          * @param ch channel
-          * @param a amps level (x10)
-          * @return ROBOTEQ_OK if successful
-          */
-        int commandMotorAmp(uint8_t ch, int16_t a);
-
         /*
          * send emergency stop command (!EX)
          * note: you have to reset the controller after this sending command
@@ -97,6 +93,10 @@ class RobotEQ {
          * @return ROBOTEQ_OK if successful
          */
         int commandEmergencyStop(void);
+
+        //*********************************************************************
+        // Query
+        //*********************************************************************
 
         /*
          * query controller firmware
@@ -141,13 +141,14 @@ class RobotEQ {
          * query motor voltage
          * 
          * @return motor voltage * 10
-         */ 
+         */
         int queryMotorVoltage(void);
+
         /*
          * query internal temp 
-         * 
+         *
          * @return temp (in degrees C)
-         */ 
+         */
         int queryInternalTemp(void);
 
         /*
@@ -155,7 +156,7 @@ class RobotEQ {
          * 
          * @param ch channel
          * @return temp (in degrees C)
-         */ 
+         */
         int queryTemp(uint8_t ch);
 
         /*
@@ -163,7 +164,7 @@ class RobotEQ {
          * 
          * @param ch channel
          * @return motor power
-         */ 
+         */
         int queryMotorPower(uint8_t ch);
 
         /*
@@ -192,6 +193,10 @@ class RobotEQ {
          */
         int queryEncoderRelativeSpeed(uint8_t ch);
 
+        //*********************************************************************
+        // Configuration
+        //*********************************************************************
+
         /*
          * set encoder pulse per rotation
          *
@@ -205,7 +210,22 @@ class RobotEQ {
         /*
          * get encoder pulse per rotation
          */
-        int getEncoderPulsePerRotation(void);
+        int getEncoderPulsePerRotation(uint8_t ch);
+
+        /*
+         * set motor amp limit
+         *
+         * @param ch channel
+         * @param a amps level (x10)
+         *
+         * @return ROBOTEQ_OK if successful
+         */
+        int setMotorAmpLimit(uint8_t ch, uint16_t a);
+
+        /*
+         * get motor amp limit
+         */
+        int getMotorAmpLimit(uint8_t ch);
 
         /*
          * load controller configuration
