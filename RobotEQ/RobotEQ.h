@@ -113,7 +113,7 @@ class RobotEQ {
          * @return battery amps * 10
          */
         int queryBatteryAmps(void);
-        
+
         /*
          * query battery amps
          * 
@@ -121,14 +121,14 @@ class RobotEQ {
          * @return battery amps * 10
          */
         int queryBatteryAmps(uint8_t ch);
-       
+
         /*
          * query battery voltage
          * 
          * @return battery voltage * 10
          */ 
         int queryBatteryVoltage(void);
-        
+
         /*
          * query internal temp 
          * 
@@ -143,7 +143,7 @@ class RobotEQ {
          * @return temp (in degrees C)
          */ 
         int queryTemp(uint8_t ch);
-       
+
         /*
          * query the motor power command
          * 
@@ -156,12 +156,12 @@ class RobotEQ {
          * query fault flags
          */
         int queryFaultFlag(void);
-        
+
         /*
          * query status flags
          */
         int queryStatusFlag(void);
-        
+
         /*
          * set timeout
          */

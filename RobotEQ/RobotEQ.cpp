@@ -17,7 +17,7 @@ void RobotEQ::setTimeout(uint16_t timeout) {
 int RobotEQ::isConnected() {
     if (this->m_Serial == NULL) 
         return ROBOTEQ_ERROR;
-    
+
     uint8_t inByte = 0;
     uint32_t startTime = millis();
 
@@ -98,16 +98,16 @@ int RobotEQ::queryMotorPower(uint8_t ch) {
     char command[ROBOTEQ_COMMAND_BUFFER_SIZE];
     char buffer[ROBOTEQ_BUFFER_SIZE];
     int res;
-    
+
     // Build Query Command
     sprintf(command, "?M %i\r", ch);
-     
+
     // Send Query
     if ((res = this->sendQuery("?BA\r", (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0) 
         return res;
     if (res < 4)
         return ROBOTEQ_BAD_RESPONSE;
-    
+
     // Parse Response
     if (sscanf((char*)buffer, "M=%i", &p) < 1) {
         return ROBOTEQ_BAD_RESPONSE;
@@ -121,7 +121,7 @@ int RobotEQ::queryBatteryAmps(void) {
     int ch1, ch2;
     char buffer[ROBOTEQ_BUFFER_SIZE];
     int res;
-    
+
     // Send Query
     if ((res = this->sendQuery("?BA\r", (uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0) 
         return res;
@@ -190,9 +190,9 @@ int RobotEQ::sendCommand(const char *command, size_t commandSize) {
     // Write Command to Serial
     this->m_Serial->write((uint8_t*)command, commandSize);
     this->m_Serial->flush();
-    
+
     uint8_t buffer[ROBOTEQ_BUFFER_SIZE];
-    int res = 0; 
+    int res = 0;
 
     // Read Serial until timeout or newline
     if ((res = this->readResponse((uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0)
