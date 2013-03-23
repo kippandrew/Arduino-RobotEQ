@@ -24,7 +24,17 @@
 
 #include <Stream.h>
 
-#define ROBOTEQ_DEFAULT_TIMEOUT     1000 
+// Logging Library available here:
+// http://playground.arduino.cc/Code/Logging 
+
+// Note: Uncomment this to enable debug logging
+#define ROBOTEQ_DEBUG
+#ifdef ROBOTEQ_DEBUG
+    #include "Logging.h"
+    #define LOGLEVEL LOG_LEVEL_DEBUG
+#endif
+
+#define ROBOTEQ_DEFAULT_TIMEOUT     1000
 #define ROBOTEQ_BUFFER_SIZE         64
 #define ROBOTEQ_COMMAND_BUFFER_SIZE 20
 
@@ -32,7 +42,7 @@
 #define ROBOTEQ_ACK_CHAR            0x06
 
 #define ROBOTEQ_OK                  0
-#define ROBOTEQ_TIMEOUT             -1 
+#define ROBOTEQ_TIMEOUT             -1
 #define ROBOTEQ_ERROR               -2
 #define ROBOTEQ_BAD_COMMAND         -3
 #define ROBOTEQ_BAD_RESPONSE        -4
@@ -193,6 +203,26 @@ class RobotEQ {
          */
         int queryEncoderRelativeSpeed(uint8_t ch);
 
+        /*
+         * Query user variable
+         *
+         * @param var
+         * @param value
+         *
+         * @return ROBOTEQ_OK if successful
+         */
+        int queryUserVariable(uint32_t var, int32_t *value);
+
+        /*
+         * Query user variable
+         *
+         * @param var
+         * @param value
+         *
+         * @return ROBOTEQ_OK if successful
+         */
+        int queryUserVariable(uint32_t var, bool *value);
+
         //*********************************************************************
         // Configuration
         //*********************************************************************
@@ -260,8 +290,12 @@ class RobotEQ {
     // Private Data
     private:
         uint16_t    m_Timeout;
-        Stream      *m_Serial; 
+        Stream      *m_Serial;
+
 };
+
+// Helper Functions
+char* chomp(char* s);
 
 #endif
 

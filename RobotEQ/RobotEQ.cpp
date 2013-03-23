@@ -1,6 +1,13 @@
 #include "Arduino.h"
 #include "RobotEQ.h"
 
+char* chomp(char* s) {
+    int end = strlen(s) - 1;
+    if (end >= 0 && (s[end] == '\n' || s[end] == '\r'))
+        s[end] = '\0';
+    return s;
+}
+
 RobotEQ::RobotEQ(Stream *serial) {
     m_Timeout = ROBOTEQ_DEFAULT_TIMEOUT;    
     m_Serial = serial; 
@@ -271,12 +278,25 @@ int RobotEQ::sendCommand(const char *command, size_t commandSize) {
     this->m_Serial->write((uint8_t*)command, commandSize);
     this->m_Serial->flush();
 
+#ifdef ROBOTEQ_DEBUG
+    char tmpCommand[ROBOTEQ_BUFFER_SIZE] = {0};
+    strcpy(tmpCommand, command);
+    Log.Debug("RobotEQ: sendCommand() command: \"%s\", len: %d"CR, chomp(tmpCommand), commandSize);
+#endif
+
     uint8_t buffer[ROBOTEQ_BUFFER_SIZE];
     int res = 0;
 
     // Read Serial until timeout or newline
     if ((res = this->readResponse((uint8_t*)buffer, ROBOTEQ_BUFFER_SIZE)) < 0)
         return res;
+
+#ifdef ROBOTEQ_DEBUG
+    char tmpBuf[ROBOTEQ_BUFFER_SIZE] = {0};
+    memcpy(&tmpBuf, (void*)buffer, res);
+    Log.Debug("RobotEQ: sendCommand() response: \"%s\", len: %d"CR, chomp(tmpBuf), res);
+#endif
+
     if (res < 1)
         return ROBOTEQ_BAD_RESPONSE; 
 
@@ -300,8 +320,22 @@ int RobotEQ::sendQuery(const char *query, size_t querySize, uint8_t *buf, size_t
     this->m_Serial->write((uint8_t*)query, querySize);
     this->m_Serial->flush();
 
+#ifdef ROBOTEQ_DEBUG
+    char tmpQuery[ROBOTEQ_BUFFER_SIZE] = {0};
+    strcpy(tmpQuery, query);
+    Log.Debug("RobotEQ: sendQuery() len: %d, query: \"%s\""CR, querySize, chomp(tmpQuery));
+#endif
+
     // Read Serial until timeout or newline
-    return this->readResponse(buf, bufSize);
+    int res = this->readResponse(buf, bufSize);
+
+#ifdef ROBOTEQ_DEBUG
+    char tmpBuf[ROBOTEQ_BUFFER_SIZE] = {0};
+    memcpy(&tmpBuf, (void*)buf, res);
+    Log.Debug("RobotEQ: sendQuery() len: %d, response: \"%s\""CR, res, chomp(tmpBuf));
+#endif
+
+    return res;
 }
 
 int RobotEQ::readResponse(uint8_t *buf, size_t bufferSize) {
@@ -321,6 +355,11 @@ int RobotEQ::readResponse(uint8_t *buf, size_t bufferSize) {
             }
         }
     }
+
+#ifdef ROBOTEQ_DEBUG
+    Log.Error("RobotEQ: Timeout reading controller"CR);
+#endif
+
     // timeout
     return ROBOTEQ_TIMEOUT;
 }
