@@ -11,6 +11,11 @@ char* chomp(char* s) {
 RobotEQ::RobotEQ(Stream *serial) {
     m_Timeout = ROBOTEQ_DEFAULT_TIMEOUT;    
     m_Serial = serial; 
+
+#ifdef ROBOTEQ_DEBUG
+    Log.Init(LOGLEVEL, 115200L);
+#endif
+
 }
 
 RobotEQ::~RobotEQ(void) {
